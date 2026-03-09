@@ -1,0 +1,11 @@
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+.env
+crash.log
+*.zip
+*.tar.gz
+*.bin
+*.img
+
