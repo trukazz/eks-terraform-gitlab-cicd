@@ -1,6 +1,10 @@
 # ---------------------------------------------------------
-# CI/CD PIPELINE FOR TERRAFORM EKS PROJECT
+# GLOBAL DEFAULTS
 # ---------------------------------------------------------
+default:
+  image:
+    name: hashicorp/terraform:1.6.6
+    entrypoint: [""]
 
 stages:
   - validate
@@ -15,9 +19,6 @@ stages:
 # ---------------------------------------------------------
 terraform_fmt:
   stage: validate
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
   script:
     - terraform fmt -check
 
@@ -26,9 +27,6 @@ terraform_fmt:
 # ---------------------------------------------------------
 terraform_validate:
   stage: validate
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
   script:
     - terraform init -backend=false
     - terraform validate
@@ -38,9 +36,6 @@ terraform_validate:
 # ---------------------------------------------------------
 terraform_plan:
   stage: plan
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
   script:
     - terraform init
     - terraform plan -var-file=$TF_VARS_FILE -out=tfplan
@@ -53,9 +48,6 @@ terraform_plan:
 # ---------------------------------------------------------
 terraform_apply:
   stage: apply
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
   script:
     - terraform init
     - terraform apply -auto-approve -var-file=$TF_VARS_FILE
@@ -93,16 +85,8 @@ deploy:
   only:
     - main
 
-##########################################################################
-# Destroy stage
-###########################################################################
-
+# ---------------------------------------------------------
+# 7. DESTROY INFRASTRUCTURE
+# ---------------------------------------------------------
 destroy:
   stage: destroy
-  image: hashicorp/terraform:1.6.6
-  script:
-    - terraform init
-    - terraform destroy -auto-approve
-  when: manual
-  allow_failure: false
-
