@@ -5,8 +5,8 @@
 stages:
   - validate
   - plan
+  - apply
   - kube
-  - build
   - deploy
 
 # ---------------------------------------------------------
@@ -14,10 +14,9 @@ stages:
 # ---------------------------------------------------------
 terraform_fmt:
   stage: validate
- 
   image:
     name: hashicorp/terraform:light
-    entrypoint: [""]            # Overrides the entrypoint to allow shell scripts
+    entrypoint: [""]
   script:
     - terraform fmt -check
 
@@ -26,7 +25,6 @@ terraform_fmt:
 # ---------------------------------------------------------
 terraform_validate:
   stage: validate
- 
   image:
     name: hashicorp/terraform:light
     entrypoint: [""]
@@ -39,19 +37,35 @@ terraform_validate:
 # ---------------------------------------------------------
 terraform_plan:
   stage: plan
-  
   image:
     name: hashicorp/terraform:light
     entrypoint: [""]
   script:
     - terraform init
-    - terraform plan -var-file=$TF_VARS_FILE -out=tfplan  # <--- Added -var-file here
+    - terraform plan -var-file=$TF_VARS_FILE -out=tfplan
   artifacts:
     paths:
       - tfplan
 
 # ---------------------------------------------------------
-# 4. KUBERNETES MANIFEST VALIDATION
+# 4. TERRAFORM APPLY (CREATES EKS CLUSTER)
+# ---------------------------------------------------------
+terraform_apply:
+  stage: apply
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  script:
+    - terraform init
+    - terraform apply -auto-approve -var-file=$TF_VARS_FILE
+  when: manual
+  only:
+    - main
+  dependencies:
+    - terraform_plan
+
+# ---------------------------------------------------------
+# 5. KUBERNETES MANIFEST VALIDATION
 # ---------------------------------------------------------
 kube_validate:
   stage: kube
@@ -63,18 +77,13 @@ kube_validate:
   script:
     - kubeconform -strict -summary -ignore-missing-schemas kubernetes/
 
-
 # ---------------------------------------------------------
-# 6. MANUAL DEPLOY TO EKS
+# 6. DEPLOY TO EKS
 # ---------------------------------------------------------
-
-
-
 deploy:
   stage: deploy
-  
-  image: 
-    name: alpine/k8s:1.27.3     # Image with both aws-cli and kubectl
+  image:
+    name: alpine/k8s:1.27.3
     entrypoint: [""]
   script:
     - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION
