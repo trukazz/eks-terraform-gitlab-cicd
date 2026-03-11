@@ -8,6 +8,7 @@ stages:
   - apply
   - kube
   - deploy
+  - destroy
 
 # ---------------------------------------------------------
 # 1. TERRAFORM FORMAT CHECK
@@ -91,3 +92,15 @@ deploy:
   when: manual
   only:
     - main
+
+##########################################################################
+# Destroy stage
+###########################################################################
+
+destroy:
+  stage: destroy
+  script:
+    - terraform init
+    - terraform destroy -auto-approve
+  when: manual
+  allow_failure: false
