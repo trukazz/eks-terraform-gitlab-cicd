@@ -99,8 +99,10 @@ deploy:
 
 destroy:
   stage: destroy
+  image: hashicorp/terraform:1.6.6
   script:
     - terraform init
     - terraform destroy -auto-approve
   when: manual
   allow_failure: false
+
