@@ -90,3 +90,13 @@ deploy:
 # ---------------------------------------------------------
 destroy:
   stage: destroy
+  script:
+    - terraform init
+    # 1. Destroy node groups first (removes ENIs)
+    - terraform destroy -auto-approve -target=module.node_group -var-file=$TF_VARS_FILE
+    # 2. Destroy the EKS cluster (removes control plane ENIs)
+    - terraform destroy -auto-approve -target=module.eks -var-file=$TF_VARS_FILE
+    # 3. Destroy the VPC last (subnets, IGW, NAT, routes)
+    - terraform destroy -auto-approve -target=module.vpc -var-file=$TF_VARS_FILE
+  when: manual
+  allow_failure: false
